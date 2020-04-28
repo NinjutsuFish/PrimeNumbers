@@ -1,0 +1,215 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Primes- By Leo Harford</title>
+<link rel="stylesheet" type="text/css" href="style.css">
+
+</head>
+
+<body>
+<div class="parent">
+<div class="div1"><h1>Primes</h1>  <h3>by Leo Harford</h3><br><p>A prime number is a number divisible only by itself and 1</p></div>
+<div class="div2"> <p>2020</p></div>
+<div class="div3"><canvas id="canvas" width="600" height="600" style="border: 1px solid blue;"></canvas> </div>
+
+<div class="div4">
+    <canvas id="graph" width="600" height="600" style="border: 1px solid black;"></canvas> 
+</div>
+<div class="div5">
+    <button type="button" onclick="sieve(10)">100</button> 
+    <button type="button" onclick="sieve(100)">10000</button>
+    <input type="text" id="txtIn" value="Custom Side Length">
+    <button type="button" onclick="sieve(parseInt(document.getElementById('txtIn').value))">Custom Side Length</button>
+    <label id="prime gap"></label>
+    </div>
+<div class="div6"> 
+    <input type="checkbox" id="log" name="log" >Draw line of approximate primes before n |<input type="checkbox" id="integral" name="integral" >Draw line of the logarithmic integral  </div>
+    <div class="div7"> The canvas above shows a number grid of NxN where the white squares a primes and the black squares are not prime numbers(composite numbers). <br> From looking at even values of n. you can see with the exception of the 2 all the even columns are black since some even column + some multiple of n will give another even number which cant be prime.Similarly the last column is almost always completely black (with the exception being inputs of n where n is a prime number) since the column is just multiples of n which can't be prime<br><b style="text-decoration: underline;">Generating Primes</b><br>The primes here are generated using the <b> sieve of eratosthenes</b> which involves starting assuming all numbers are prime <br>and removing integers which are multiples of primes up to NxN starting from an integer you know is prime squared and then adding multiples of that integer. You do this with all integers which haven't been marked as not prime by counting through them up till n where n squared is bigger that the number we are looking for primes up to. By this point all the numbers between 0 and n squared will have been marked as primes or non-prime numbers<br><b style="text-decoration: underline;">Gaps between primes</b><br>The <b>smallest gap between primes is 1</b>.2 and 3 are the <b>only</b> example of this since a gap of 1 means it is between and odd and even number and 2 is the only even prime.<br>There are also large gaps between primes. From the grid above these large gaps appears as black lines but are often are not very and large and when they are the size of the grid is so big making them hard to see</div>
+<div class="div8"> The canvas above shows a graph where the bars represent number of primes before each bar. The function given the input x and returns how many primes prior is commonly written as <b>π(x)</b><br> If enabled the red line shows the approximate amount of primes before each bar using the formula<br><b>X/lnX</b> The function is undefined at 1 causing a break in the graph when viewing for a small number <br> A more accurate representation of π(x) is the logarithmic integral.<br> <b><math>
+    li(x) = ∫<sub>2</sub><sup>x</sup>      1/ln(t) dt </math></b><br> The integral is bounded from 2 to x (The integral with these bounds is commonly written as <b>Li(x)</b>) since 2 is the first prime number and before that is not needed, aswell as this the Li(x) has a vertical asympytote at 1. The program generates values for the integral using the trapezium rule since the integral of the 1/lnx is defined to be the function Li(x) <br> Li(x)~π(x) for larger and larger values of x.<br>Even more accurately the "non-trivial" zeroes of the Riemann Zeta function(also written as<b>Ç(s)</b>) encode information of the π(x) and if you have all infinetly many of them you have π(x). Approximations of this are sometimes written as <b>R(x)</b> This is explained alot better by the <a href="https://en.wikipedia.org/wiki/Prime-counting_function">wikipedia</a> page and by this other <a href="http://empslocal.ex.ac.uk/people/staff/mrwatkin/zeta/encoding1.htm">page </a></div>
+</div>
+
+</body>
+<script>
+let nums;
+var c = document.getElementById("canvas");
+var ctx = c.getContext("2d");
+var graph = document.getElementById("graph");
+var ctxG = graph.getContext("2d"); //ctx graph
+let scale=10;
+let precision = 1000;
+function sieve(n) {
+    //clear screen
+    ctx.fillStyle = "white";
+    ctx.fillRect(0,0,600,600);
+
+    //console.log("sss")
+   // n = 10;
+    nums = new Array((n*n)+1).fill(1);
+    nums[0] = 0;
+    nums[1] = 0;
+    for(let i=0;i<=n;i++){
+        if(nums[i]==1){
+            remove(i,n);
+            //console.log(i)
+        }
+    }
+getPrimes(n)
+}
+function remove(k,n){
+    toRemove = k*k;
+    while(toRemove<=(n*n)){
+        nums[toRemove] = 0;
+        toRemove+=k;
+    }
+    
+}
+function getPrimes(n){
+    let k=0;
+    ctx.fillStyle = "black";
+    previousPrime = 1;
+    ctxG.fillStyle = "white";
+    ctxG.fillRect(0,0,600,600);
+    clear();
+    let gapA = 2;
+    let gapB = 3;
+    let maxGap = 1;
+    for(let j =0;j<nums.length;j++){
+        //console.log(nums[j])
+        if(nums[j]==1){
+            //console.log(j)
+            k+=1;
+            addBar(k,previousPrime,j,n);
+            
+            if(j-previousPrime>gapB-gapA){
+               // console.log(maxGap,j,previousPrime)
+                gapA = previousPrime
+                gapB = j;
+            }
+            previousPrime = j;
+        }
+        if(nums[j] ==0){
+            setSquare(j-1,n);
+        };
+        //update Graph
+        
+    }
+    addBar(k,previousPrime,nums.length,n);
+    //console.log(k)
+    if( document.getElementById("log").checked){
+    plotApprox(n)
+    }
+    if( document.getElementById("integral").checked){
+    plotLi(n)
+    }
+    
+    border();
+    
+    //updating prime gap
+    if(n>2){
+        setPrimeGap(gapA,gapB)
+    }
+}
+function setSquare(k,n){
+    ctx.fillStyle = "black";
+    squareSize = (600)/n;
+    //console.log((k%n)*squareSize,(Math.floor(k/n))*squareSize)
+    ctx.fillRect((k%n)*squareSize,(Math.floor(k/n))*squareSize, squareSize,squareSize );
+    ctx.stroke();
+}
+function addBar(weight,prev,pos,n){
+    ctxG.fillStyle = "black";
+    barWidth = 600/(n*n);
+    //x / ln(x) is rouglhy equal to the numbher of primes before x see https://primes.utm.edu/howmany.html
+    
+    heightPerPrime = 400/((n*n)/Math.log(n*n));
+    
+    //console.log(pos*barWidth,600-(heightPerPrime*weight))
+    ctxG.fillRect((prev)*barWidth,600-(heightPerPrime*weight),barWidth*(1+pos-prev),heightPerPrime*weight);
+    ctxG.stroke();   
+}
+function plotApprox(n){
+    let Scale = 600/(n*n)
+    let yScale = 400/((n*n)/Math.log(n*n));
+    let increment = (n*n)/600
+    ctxG.strokeStyle = "red";
+    ctxG.lineWidth = 1;
+    //console.log(increment)
+    ctxG.beginPath()
+    for(let j=2;j<=n*n;j+=increment){
+        ctxG.moveTo(Scale*j,600-((j/Math.log(j))*yScale));
+       //console.log(Scale*j,600-((j/Math.log(j))*yScale))
+        ctxG.lineTo(Scale*(j+increment),600-(((j+increment)/Math.log(j+increment))*yScale));
+        
+    }
+    ctxG.closePath();
+    ctxG.stroke();
+    ctxG.beginPath();
+    ctxG.closePath();
+    ctxG.strokeStyle = "black";
+    
+    
+}
+function plotLi(n){
+    let Scale = 600/(n*n)
+    let yScale = 400/((n*n)/Math.log(n*n));
+    let increment = (n*n)/600
+    ctxG.strokeStyle = "orange";
+    ctxG.lineWidth = 1;
+    //console.log(increment)
+    ctxG.beginPath()
+    for(let j=2;j<=n*n;j+=increment){
+        ctxG.moveTo(Scale*j,600-((Li(j,precision)*yScale)));
+       //console.log(Scale*j,600-((j/Math.log(j))*yScale))
+        ctxG.lineTo(Scale*(j+increment),600-(Li(j+increment,precision)*yScale));
+        
+        
+    }
+    ctxG.closePath();
+    ctxG.stroke();
+    ctxG.beginPath();
+    ctxG.closePath();
+    ctxG.strokeStyle = "black";
+    
+    
+    
+    
+    
+}
+function Li(u,iter){ //approximating Li using trapezium rule we only care about primes after 2 since its the first also the function has an asymptote at 1 so we can avoid errors by starting here
+    //work out interval size for base of the triangle
+    let result = 0;
+    let interval = (u-2)/iter
+    for(let i = 0;i<iter;i++){
+        result += interval*0.5*(1/Math.log(2+ (i*interval) ) +(1/Math.log(2+( (i+1)*interval) ) ))       
+    }
+    return result;
+  
+}   
+    
+    
+function clear(){
+    ctxG.clearRect(1,1,599,599);
+    ctxG.fillStyle = "white";
+    ctxG.fillRect(1,1,599,599);
+    ctxG.fillStyle = "black";
+    ctx.clearRect(0,0,600,600);
+}
+function border(){
+    ctx.strokeStyle = "black";    
+    ctxG.beginPath();
+    ctxG.moveTo(0,0);
+    ctxG.lineTo(0,600);
+    ctxG.lineTo(600,600);
+    ctxG.lineTo(600,0);
+    ctxG.stroke();
+    ctxG.closePath();
+    ctxG.beginPath();
+    ctxG.closePath();
+    
+}
+function setPrimeGap(j,k){
+    document.getElementById('prime gap').innerHTML = 'The largest gap between primes was '+j+","+k+"("+(k-j)+")";
+}
+</script>
+</html>
